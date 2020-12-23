@@ -1,10 +1,9 @@
+from shop.bot.shop_bot import bot, app
+import time
+from shop.bot.config import WEBHOOK_URL
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
+bot.remove_webhook()
+time.sleep(0.5)
+bot.set_webhook(WEBHOOK_URL, certificate=open('webhook_cert.pem'))
+app.run()
+# bot.polling()
