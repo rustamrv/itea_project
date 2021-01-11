@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Новости</title>
+</head>
+<body>
+<div class="container">
+   <h1>Admin </h1>
+    <div class="menu">
+        <a href="/orders">Заказы</a>
+        <a href="/products">Товары</a>
+        <a href="/add_group">Добавить категорию</a>
+        <a href="/add_product">Добавить товар</a>
+        <a href="/users">Пользователи</a>
+        <a href="/news">Новости</a>
+        <a href="/add_news">Добавить новости</a>
+    </div>
+</div>
+<div class="container">
+ <table  class="table table-striped table-dark">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">title</th>
+      <th scope="col">body</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for i in news %}
+    <tr>
+      <th scope="row"></th>
+      <td>{{i.title}}</td>
+      <td>{{i.body}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+</body>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+
+</html>

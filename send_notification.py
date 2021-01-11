@@ -1,4 +1,4 @@
-from shop.bot.send_news import Sender
+from shop.bot.send_news import SenderCategory
 from shop.models.shop_models import User
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup
 

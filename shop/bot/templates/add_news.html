@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить новость</title>
+</head>
+<body>
+<div class="container">
+   <h1>Admin </h1>
+    <div class="menu">
+        <a href="/orders">Заказы</a>
+        <a href="/products">Товары</a>
+        <a href="/add_group">Добавить категорию</a>
+        <a href="/add_product">Добавить товар</a>
+        <a href="/users">Пользователи</a>
+        <a href="/news">Новости</a>
+        <a href="/add_news">Добавить новости</a>
+    </div>
+</div>
+   <div class="container">
+        <form name="add_news" action="/add_news" method="post">
+        <div class="form-group">
+            <p><b>Добавить новость</b></p>
+            <p>Название <input type="text" class="form-control" name="title"></p>
+             <p>Описание <textarea name="description" class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea></p>
+
+            <p><input type="submit"></p>
+        </div>
+        </form>
+    </div>
+</body>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Пользователи</title>
+</head>
+<body>
+<div class="container">
+   <h1>Admin </h1>
+    <div class="menu">
+        <a href="/orders">Заказы</a>
+        <a href="/products">Товары</a>
+        <a href="/add_group">Добавить категорию</a>
+        <a href="/add_product">Добавить товар</a>
+        <a href="/users">Пользователи</a>
+        <a href="/news">Новости</a>
+        <a href="/add_news">Добавить новости</a>
+    </div>
+</div>
+<div class="container">
+ <table  class="table table-striped table-dark">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">first_name</th>
+      <th scope="col">username</th>
+      <th scope="col">phone_number</th>
+      <th scope="col">email</th>
+        <th scope="col">is_block</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for i in users %}
+    <tr>
+      <th scope="row"></th>
+      <td>{{i.first_name}}</td>
+      <td>{{i.username}}</td>
+      <td>{{i.phone_number}}</td>
+              <td>{{i.email}}</td>
+              <td>{{i.is_block}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+</body>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+
+</html>

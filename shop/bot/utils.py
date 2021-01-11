@@ -1,5 +1,6 @@
 import json
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
+from .constants import constants_bot
 
 
 def inline_kb_from_iterable(
@@ -23,3 +24,19 @@ def inline_kb_from_iterable(
     kb = InlineKeyboardMarkup()
     kb.add(*buttons)
     return kb
+
+
+def init_cart_button(tags, id_field='id'):
+    kb = InlineKeyboardMarkup()
+    data = []
+    for tag in tags:
+        button = InlineKeyboardButton(
+            text=constants_bot.CART_KB[tag],
+            callback_data=json.dumps({
+                "id": str(id_field),
+                "tag": tag
+            }))
+        data.append(button)
+    kb.row(*data)
+    return kb
+

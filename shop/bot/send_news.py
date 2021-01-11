@@ -1,13 +1,14 @@
-from .shop_bot import bot
 from shop.models.shop_models import User
 from telebot.apihelper import ApiException
 import time
 from threading import Thread
 
+
 class Sender:
 
-    def __init__(self, users, **msg_data):
-        self._msg_data = msg_data
+    def __init__(self, users, bot, _msg_data):
+        self._msg_data = _msg_data
+        self.bot = bot
         self._users = users
 
     def send_message(self):
@@ -15,9 +16,9 @@ class Sender:
         blocked_ids = []
         for u in users:
             try:
-                bot.send_message(
+                self.bot.send_message(
                     u.telegram_id,
-                    **self._msg_data
+                    self._msg_data
                 )
             except ApiException as e:
                 if e.error_code == 403:
