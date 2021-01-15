@@ -12,7 +12,7 @@ from .utils import inline_kb_from_iterable, init_cart_button
 from flask import Flask, request, abort
 from ..api.app import admin
 from .send_news import Sender
-from ..api.resources import RestCatalog, RestProducts
+from ..api.resources import RestCatalog, RestProducts, RestOrder, PostAddCategory, PostAddProduct
 from flask_restful import Api
 from threading import Thread
 import time
@@ -23,6 +23,9 @@ app.register_blueprint(admin)
 api = Api(app)
 api.add_resource(RestProducts, '/api_product')
 api.add_resource(RestCatalog, '/api_catalog')
+api.add_resource(RestOrder, '/api_order')
+api.add_resource(PostAddCategory, '/api_add_category')
+api.add_resource(PostAddProduct, '/api_add_product')
 
 
 def send_msg():
