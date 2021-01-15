@@ -114,12 +114,15 @@ class Cart(me.Document):
 
     def get_active_order(self):
         order = Order.objects(user=self.user, cart=self).first()
-        if not order:
+        if not order or order.sum_order == 0:
             order = Order()
             order.user = self.user
             order.cart = self
             order.sum_order = self.get_cost_cart()
-            order.save()
+            if not order.sum_order == 0:
+                order.save()
+            else:
+                return None
         return order
 
     def get_detail(self, product):

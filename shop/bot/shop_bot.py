@@ -19,13 +19,13 @@ import time
 
 bot = TeleBot(TOKEN)
 app = Flask(__name__, template_folder='templates')
-app.register_blueprint(admin)
+app.register_blueprint(admin, url_prefix='/admin')
 api = Api(app)
-api.add_resource(RestProducts, '/api_product')
-api.add_resource(RestCatalog, '/api_catalog')
-api.add_resource(RestOrder, '/api_order')
-api.add_resource(PostAddCategory, '/api_add_category')
-api.add_resource(PostAddProduct, '/api_add_product')
+api.add_resource(RestProducts, '/admin/api_product')
+api.add_resource(RestCatalog, '/admin/api_catalog')
+api.add_resource(RestOrder, '/admin/api_order')
+api.add_resource(PostAddCategory, '/admin/api_add_category')
+api.add_resource(PostAddProduct, '/admin/api_add_product')
 
 
 def send_msg():
@@ -105,17 +105,17 @@ def handler_discount(message: Message):
                 "tag": constants_bot.PRODUCT_TAG
             }))
         kb.add(button)
-
-        if p.image.read():
-            bot.send_photo(message.chat.id,
-                           p.image.read(),
-                           caption=p.get_description(),
-                           reply_markup=kb
-                           )
-        else:
+        read = p.image.read()
+        if read is None:
             bot.send_message(message.chat.id,
                              p.get_description(),
                              reply_markup=kb)
+        else:
+            bot.send_photo(message.chat.id,
+                           read,
+                           caption=p.get_description(),
+                           reply_markup=kb
+                           )
 
 
 @bot.message_handler(func=lambda m: constants_bot.START_KB[constants_bot.ORDER] == m.text)
@@ -124,7 +124,11 @@ def handler_order(message: Message):
     cart = user.get_active_cart()
     if cart:
         order = cart.get_active_order()
-        if order.sum_order == 0:
+        if order is None:
+            bot.send_message(message.chat.id,
+                             "Корзина пустая"
+                             )
+        elif order.sum_order == 0:
             bot.send_message(message.chat.id,
                              "Корзина пустая"
                              )

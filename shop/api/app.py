@@ -8,15 +8,12 @@ from ..bot.config import WEBHOOK_URI
 admin = Blueprint('admin', __name__)
 
 
-@admin.route(WEBHOOK_URI + '/')
-@admin.route(WEBHOOK_URI + '/index')
 @admin.route('/')
 @admin.route('/index')
 def index():
     return render_template('index.html')
 
 
-@admin.route(WEBHOOK_URI + '/add_group',  methods=['GET', 'POST'])
 @admin.route('/add_group', methods=['GET', 'POST'])
 def add_group():
     if request.method == "GET":
@@ -24,7 +21,7 @@ def add_group():
         data = {
             "categories": categories,
         }
-        return render_template('add_group.html', **data)
+        return render_template('/add_group.html', **data)
     else:
         data_form = dict(request.form)
         category = Category()
@@ -35,7 +32,6 @@ def add_group():
         return redirect(url_for('.index'))
 
 
-@admin.route(WEBHOOK_URI + '/add_product',  methods=['GET', 'POST'])
 @admin.route('/add_product', methods=['GET', 'POST'])
 def add_product():
     if request.method == "GET":
@@ -43,7 +39,7 @@ def add_product():
         data = {
             "categories": categories,
         }
-        return render_template('add_product.html', **data)
+        return render_template('/add_product.html', **data)
     else:
         data_form = dict(request.form)
         product = Product()
@@ -57,10 +53,9 @@ def add_product():
             product.image.put(file, content_type='image/png', filename=file.filename)
             os.remove(file.filename)
         product.save()
-        return redirect(url_for('.index'))
+        return redirect(url_for('.products'))
 
 
-@admin.route(WEBHOOK_URI + '/products',  methods=['GET', 'POST'])
 @admin.route('/products', methods=['GET', 'POST'])
 def products():
     if request.method == "GET":
@@ -71,7 +66,6 @@ def products():
         return render_template('list_of_products.html', **data)
 
 
-@admin.route(WEBHOOK_URI + '/users')
 @admin.route('/users')
 def users():
     users = User.objects
@@ -81,7 +75,6 @@ def users():
     return render_template('list_of_users.html', **data)
 
 
-@admin.route(WEBHOOK_URI + '/news')
 @admin.route('/news')
 def news():
     news = News.objects
@@ -91,7 +84,6 @@ def news():
     return render_template('list_of_news.html', **data)
 
 
-@admin.route(WEBHOOK_URI + '/orders')
 @admin.route('/orders')
 def orders():
     orders = Order.objects
@@ -101,7 +93,6 @@ def orders():
     return render_template('list_of_order.html', **data)
 
 
-@admin.route(WEBHOOK_URI + '/delete/<product_id>')
 @admin.route('/delete/<product_id>')
 def delete_product(product_id=None):
     product = Product.objects.get(id=product_id)
@@ -109,7 +100,6 @@ def delete_product(product_id=None):
     return redirect(url_for('.products'))
 
 
-@admin.route(WEBHOOK_URI + '/edit_product/<product_id>')
 @admin.route('/edit_product/<product_id>')
 def edit_product(product_id=None):
     product = Product.objects.get(id=product_id)
@@ -117,7 +107,6 @@ def edit_product(product_id=None):
     return redirect(url_for('.products'))
 
 
-@admin.route(WEBHOOK_URI + '/add_news', methods=['GET', 'POST'])
 @admin.route('/add_news', methods=['GET', 'POST'])
 def add_news():
     if request.method == "GET":
@@ -128,4 +117,4 @@ def add_news():
         news_.title = data_form["title"]
         news_.body = data_form["description"]
         news_.save()
-        return redirect(url_for('.add_news'))
+        return redirect(url_for('.news'))
