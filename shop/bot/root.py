@@ -9,20 +9,20 @@ from .config import WEBHOOK_URI
 
 app = Flask(__name__, template_folder='templates')
 api = Api(app)
-api.add_resource(RestProducts, WEBHOOK_URI + '/api/products')
-api.add_resource(RestCatalog, WEBHOOK_URI + '/api/catalogs')
-api.add_resource(RestOrder, WEBHOOK_URI + '/api/orders')
-api.add_resource(PostAddCategory, WEBHOOK_URI + '/api/add_category')
-api.add_resource(PostAddProduct, WEBHOOK_URI + '/api/add_product')
+api.add_resource(RestProducts, '/api/products')
+api.add_resource(RestCatalog, '/api/catalogs')
+api.add_resource(RestOrder, '/api/orders')
+api.add_resource(PostAddCategory, '/api/add_category')
+api.add_resource(PostAddProduct, '/api/add_product')
 
 
-@app.route(WEBHOOK_URI)
-@app.route(WEBHOOK_URI + '/index')
+@app.route('/')
+@app.route('/index')
 def index():
-    return render_template('index.html')
+    return "Hello" # render_template('index.html')
 
 
-@app.route(WEBHOOK_URI + '/add_group', methods=['GET', 'POST'])
+@app.route('/add_group', methods=['GET', 'POST'])
 def add_group():
     if request.method == "GET":
         categories = Category.objects
@@ -45,7 +45,7 @@ def add_group():
         return redirect(url_for('.index'))
 
 
-@app.route(WEBHOOK_URI + '/add_product', methods=['GET', 'POST'])
+@app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
     if request.method == "GET":
         categories = Category.objects
@@ -70,7 +70,7 @@ def add_product():
         return redirect(url_for('.products'))
 
 
-@app.route(WEBHOOK_URI + '/products', methods=['GET', 'POST'])
+@app.route('/products', methods=['GET', 'POST'])
 def products():
     if request.method == "GET":
         products = Product.objects
