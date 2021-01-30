@@ -14,9 +14,9 @@ from flask import Flask, request, abort
 from .send_news import Sender
 from threading import Thread
 import time
-
+from shop.api.root import app
 bot = TeleBot(TOKEN)
-app = Flask(__name__)
+# app = Flask(__name__)
 
 
 def send_msg():
