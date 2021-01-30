@@ -116,3 +116,7 @@ blueprint для flask (решить вопрос с созданием с до�
 6) Запуск
    1. gunicorn --bind 127.0.0.1:5000 main_bot:app --daemon 
    2. gunicorn --bind 127.0.0.1:5000 app_main:app --daemon    
+   
+7) Fix arleady address
+   1. netstat -tulpn
+   2. kill -9 ping
