@@ -7,11 +7,11 @@ from shop.api.resources import PostAddCategory, PostAddProduct, RestOrder, RestC
 
 app = Flask(__name__, template_folder='templates')
 api = Api(app)
-api.add_resource(RestProducts, '/api/products')
-api.add_resource(RestCatalog, '/api/catalogs')
-api.add_resource(RestOrder, '/api/orders')
-api.add_resource(PostAddCategory, '/api/add_category')
-api.add_resource(PostAddProduct, '/api/add_product')
+api.add_resource(RestProducts, '/api/get_products')
+api.add_resource(RestCatalog, '/api/get_catalogs')
+api.add_resource(RestOrder, '/api/get_orders')
+api.add_resource(PostAddCategory, '/api/get_add_category')
+api.add_resource(PostAddProduct, '/api/get_add_product')
 
 
 @app.route('/api')
