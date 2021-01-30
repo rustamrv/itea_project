@@ -77,4 +77,42 @@
 1) Создать REST (в пакете api). REST API должен покрывать следующее модели:
 новости, пользователи, заказы (чтение), категории, продукты. Посмотреть в сторонy
 blueprint для flask (решить вопрос с созданием с доп. обьекта app).
-Использовать flask_restfull
+Использовать flask_restfull 
+   
+
+#deploy
+1) Установка пакетов:
+   1. sudo apt update 
+   2. sudo apt install -y mongodb
+2) Установка виртуального окружение
+   1. python3 -m virtualenv venv
+   2. source venv/bin/activate
+3) Установка пакетов
+   1. pip3 install -r requirements.txt
+4) Создать ключи и установить
+   1. openssl genrsa -out webhook_pkey.pem 2048
+   2. openssl req -new -x509 -days 3650 -key webhook_pkey.pem -out webhook_cert.pem 
+      > common name ip - адрес
+   4. sudo cp webhook_pkey.pem /etc/ssl/private/
+   5. sudo cp webhook_cert.pem /etc/ssl/certs/
+5) Nginx
+   1. cd /etc/nginx/sites-available/
+   2. sudo nano default 
+      >listen 80 default_server; <br/>
+      listen 443 ssl http2;<br/> 
+      ssl_certificate /etc/ssl/certs/webhook_cert.pem; <br/>
+      ssl_certificate_key /etc/ssl/private/webhook_pkey.pem; <br/>
+      location /bot { <br/>
+      proxy_http_version 1.1; <br/>
+      proxy_pass http://127.0.0.1:5000/bot; <br/> 
+      }<br/> 
+      location /api {<br/> 
+      proxy_pass http://127.0.0.1:5000/api; <br/>
+      proxy_set_header Host $host;<br/>
+      proxy_set_header X-Real-IP $remote_addr;<br/>
+      }
+      >
+   3. sudo service nginx restart|stop|start|reload
+6) Запуск
+   1. gunicorn --bind 127.0.0.1:5000 main_bot:app --daemon
+   2. gunicorn --bind 127.0.0.1:5000 app_main:app --daemon 

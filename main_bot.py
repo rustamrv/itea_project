@@ -1,4 +1,4 @@
-from shop.bot.shop_bot import bot, app
+from shop.bot.shop_bot import bot
 import time
 from shop.bot.config import WEBHOOK_URL
 
