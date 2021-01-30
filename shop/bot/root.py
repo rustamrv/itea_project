@@ -3,12 +3,19 @@ from flask import Flask, render_template, redirect, url_for, request
 from shop.models.shop_models import Category, Product, User, Order
 from shop.models.extra_models import News
 from flask_restful import Api
+from shop.api.resources import PostAddCategory, PostAddProduct, RestOrder, RestCatalog, RestProducts
 
 
 app = Flask(__name__, template_folder='templates')
-# api = Api(admin)
+api = Api(app)
+api.add_resource(RestProducts, '/api/products')
+api.add_resource(RestCatalog, '/api/catalogs')
+api.add_resource(RestOrder, '/api/orders')
+api.add_resource(PostAddCategory, '/api/add_category')
+api.add_resource(PostAddProduct, '/api/add_product')
 
 
+@app.route('/')
 @app.route('/index')
 def index():
     return render_template('index.html')
@@ -106,7 +113,7 @@ def delete_product(product_id=None):
     return redirect(url_for('.products'))
 
 
-@app.route('/edit_product/<product_id>', methods=['GET','POST'])
+@app.route('/edit_product/<product_id>', methods=['GET', 'POST'])
 def edit_product(product_id=None):
     product = Product.objects.get(id=product_id)
     if request.method == "GET":
