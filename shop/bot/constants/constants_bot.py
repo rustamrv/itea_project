@@ -1,5 +1,5 @@
 GREETINGS = 'Привет {}. Рады тебя приветствовать в нашем магазине-боте'
-ADD_TO_CART = 'Добавить в корзину'
+ADD_TO_CART = "Добавить"
 
 CATEGORIES = 1
 CART = 2
@@ -30,13 +30,10 @@ RIGHT = 10
 CART_KB = {
     PLUS: '+',
     MINUS: '-',
-    SET_ORDER_PHONE: 'Введите телефон',
-    SET_ORDER_EMAIL: 'Введите почту',
-    SET_ORDER_ADDRESS: 'Введите адрес',
     LEFT: '<<',
     RIGHT: '>>'
 }
 
 client_status = {}
 ID_PRODUCT = 0
-product_data = None
+product_data = []

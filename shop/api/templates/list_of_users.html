@@ -5,18 +5,7 @@
     <title>Пользователи</title>
 </head>
 <body>
-<div class="container">
-   <h1>Admin </h1>
-       <div class="menu">
-        <a href="/admin/orders">Заказы</a>
-        <a href="/admin/products">Товары</a>
-        <a href="/admin/add_group">Добавить категорию</a>
-        <a href="/admin/add_product">Добавить товар</a>
-        <a href="/admin/users">Пользователи</a>
-        <a href="/admin/news">Новости</a>
-        <a href="/admin/add_news">Добавить новости</a>
-    </div>
-</div>
+{% include 'menu.html' %}
 <div class="container">
  <table  class="table table-striped table-dark">
   <thead>

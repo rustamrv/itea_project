@@ -2,36 +2,27 @@ import json
 from mongoengine import NotUniqueError
 from mongoengine.errors import ValidationError
 from telebot import TeleBot
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton, Message, InlineKeyboardButton, InlineKeyboardMarkup
+from telebot.types import Message
 from telebot.types import Update
 from .config import TOKEN, WEBHOOK_URI
 from .constants import constants_bot
 from ..models.shop_models import Category, User, Product
 from ..models.extra_models import News
-from .utils import inline_kb_from_iterable, init_cart_button
+from .utils import inline_kb_from_iterable, init_cart_button, init_keyboard_request_contact, \
+    inline_kb_from_iterable_keyboard
 from flask import Flask, request, abort
-from ..api.app import admin
 from .send_news import Sender
-from ..api.resources import RestCatalog, RestProducts, RestOrder, PostAddCategory, PostAddProduct
-from flask_restful import Api
 from threading import Thread
 import time
 
 bot = TeleBot(TOKEN)
-app = Flask(__name__, template_folder='templates')
-app.register_blueprint(admin, url_prefix='/admin')
-api = Api(app)
-api.add_resource(RestProducts, '/admin/api_product')
-api.add_resource(RestCatalog, '/admin/api_catalog')
-api.add_resource(RestOrder, '/admin/api_order')
-api.add_resource(PostAddCategory, '/admin/api_add_category')
-api.add_resource(PostAddProduct, '/admin/api_add_product')
+app = Flask(__name__)
 
 
 def send_msg():
     while True:
         all_news_ = News.objects
-        if not len(all_news_) == 0:
+        if len(all_news_) > 0:
             news_ = all_news_[:len(all_news_)][len(all_news_)-1]
             sender = Sender(users=User.objects, bot=bot, _msg_data=f'{news_.title}\n {news_.body}')
             sender.send_message()
@@ -40,7 +31,7 @@ def send_msg():
         time.sleep(day)
 
 
-Thread(target=send_msg).start()
+# Thread(target=send_msg).start()
 
 
 @app.route(WEBHOOK_URI, methods=['POST'])
@@ -69,9 +60,7 @@ def handle_start(message: Message):
     else:
         name = f', {message.from_user.first_name}' if getattr(message.from_user, 'first_name') else ''
         greetings = constants_bot.GREETINGS.format(name)
-    kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = [KeyboardButton(n) for n in constants_bot.START_KB.values()]
-    kb.add(*buttons)
+    kb = inline_kb_from_iterable_keyboard(constants_bot.START_KB.values())
     bot.send_message(message.chat.id, greetings, reply_markup=kb)
 
 
@@ -97,14 +86,9 @@ def handler_discount(message: Message):
         bot.send_message(message.chat.id,
                          "Нет товаров со скидкой")
     for p in data:
-        kb = InlineKeyboardMarkup()
-        button = InlineKeyboardButton(
-            text=constants_bot.ADD_TO_CART,
-            callback_data=json.dumps({
-                "id": str(p.id),
-                "tag": constants_bot.PRODUCT_TAG
-            }))
-        kb.add(button)
+        tags = [constants_bot.ADD_TO_CART]
+
+        kb = init_cart_button(tags, p.id)
         read = p.image.read()
         if read is None:
             bot.send_message(message.chat.id,
@@ -133,10 +117,7 @@ def handler_order(message: Message):
                              "Корзина пустая"
                              )
         else:
-            kb = ReplyKeyboardMarkup()
-            but = KeyboardButton('Отправить телефон', request_contact=True)
-
-            kb.add(but)
+            kb = init_keyboard_request_contact('Отправить телефон')
             bot.send_message(message.chat.id,
                              f"Заказ на сумму {order.sum_order}",
                              reply_markup=kb
@@ -155,7 +136,10 @@ def handler_cart(message: Message):
         if len(cart.get_products()) == 0:
             bot.send_message(message.chat.id, "Ваша корзина пуста")
         for i in cart.get_products():
-            kb = init_cart_button([constants_bot.PLUS, constants_bot.MINUS], str(i["id"]))
+            buttons_id = [constants_bot.PLUS, constants_bot.MINUS]
+            buttons = [constants_bot.CART_KB[i] for i in buttons_id]
+            kb = init_cart_button(buttons, str(i["id"]))
+
             bot.send_message(message.chat.id,
                              i["description"],
                              reply_markup=kb
@@ -163,6 +147,16 @@ def handler_cart(message: Message):
     else:
         bot.send_message(message.chat.id, "Ваша корзина пуста")
 
+
+@bot.message_handler(func=lambda m: constants_bot.START_KB[constants_bot.NEWS] == m.text)
+def handler_news(message: Message):
+    all_news_ = News.objects
+    kb = inline_kb_from_iterable_keyboard(constants_bot.START_KB.values())
+    if len(all_news_) > 0:
+        news_ = all_news_[:len(all_news_)][len(all_news_) - 1]
+        bot.send_message(message.chat.id, f'{news_.title}\n {news_.body}', reply_markup=kb)
+    else:
+        bot.send_message(message.chat.id, "Новостей нет", reply_markup=kb)
 
 # end handler commands
 
@@ -178,17 +172,13 @@ def contact(message):
         order.save()
         user.phone_number = order.phone_number
         user.save()
-        kb = ReplyKeyboardMarkup(resize_keyboard=True)
+        kb = inline_kb_from_iterable_keyboard(constants_bot.START_KB.values())
+        constants_bot.client_status[client_id] = constants_bot.SET_ORDER_EMAIL
 
-        buttons = [KeyboardButton(n) for n in constants_bot.START_KB.values()]
-        kb.add(*buttons)
-        bot.send_message(message.chat.id, "Сохранили телефон.", reply_markup=kb)
-        kb = init_cart_button([constants_bot.SET_ORDER_EMAIL], str(constants_bot.SET_ORDER_EMAIL))
-
-        bot.send_message(message.chat.id, "Введите почту", reply_markup=kb)
+        bot.send_message(message.chat.id, "Сохранили телефон. Введите почту", reply_markup=kb)
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.PLUS)
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.CART_KB[constants_bot.PLUS])
 def handler_add_to_cart(call):
     product_id = json.loads(call.data)['id']
     product = Product.objects.get(id=product_id)
@@ -199,17 +189,18 @@ def handler_add_to_cart(call):
         call.id,
         'Увеличили количество на 1'
     )
-    kb = init_cart_button([constants_bot.PLUS, constants_bot.MINUS], str(product_id))
-
+    buttons_id = [constants_bot.PLUS, constants_bot.MINUS]
+    buttons = [constants_bot.CART_KB[i] for i in buttons_id]
+    kb = init_cart_button(buttons, str(product_id))
     bot.edit_message_text(
-        text=cart.get_detail(product),
+        text=cart.get_detail(product.id),
         chat_id=call.message.chat.id,
         message_id=call.message.id,
         reply_markup=kb
     )
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.MINUS)
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.CART_KB[constants_bot.MINUS])
 def handler_remove_cart(call):
     product_id = json.loads(call.data)['id']
     product = Product.objects.get(id=product_id)
@@ -217,22 +208,45 @@ def handler_remove_cart(call):
     cart = user.get_active_cart()
     if product in cart.products:
         cart.remove_product(product)
+
         bot.answer_callback_query(
             call.id,
             'Уменьшили количество на 1'
         )
-        kb = init_cart_button([constants_bot.PLUS, constants_bot.MINUS], str(product_id))
+        len_obj = [j for j in cart.products if j == product]
+        if len(len_obj) == 0:
+            if len(cart.get_products()) == 0:
+                bot.edit_message_text(
+                    text="Ваша корзина пуста",
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.id
+                )
+            for i in cart.get_products():
+                buttons_id = [constants_bot.PLUS, constants_bot.MINUS]
+                buttons = [constants_bot.CART_KB[i] for i in buttons_id]
+                kb = init_cart_button(buttons, str(i["id"]))
 
-        bot.edit_message_text(
-            text=cart.get_detail(product),
-            chat_id=call.message.chat.id,
-            message_id=call.message.id,
-            reply_markup=kb
-        )
+                bot.send_message(call.message.chat.id,
+                                 i["description"],
+                                 reply_markup=kb
+                                 )
+        else:
+            buttons_id = [constants_bot.PLUS, constants_bot.MINUS]
+            buttons = [constants_bot.CART_KB[i] for i in buttons_id]
+            kb = init_cart_button(buttons, str(product_id))
+            bot.edit_message_text(
+                text=cart.get_detail(product.id),
+                chat_id=call.message.chat.id,
+                message_id=call.message.id,
+                reply_markup=kb
+            )
     else:
         if cart:
+            buttons_id = [constants_bot.PLUS, constants_bot.MINUS]
+            buttons = [constants_bot.CART_KB[i] for i in buttons_id]
             for i in cart.get_products():
-                kb = init_cart_button([constants_bot.PLUS, constants_bot.MINUS], str(i["id"]))
+
+                kb = init_cart_button(buttons, str(i['id']))
                 bot.send_message(call.message.chat.id,
                                  i["description"],
                                  reply_markup=kb
@@ -241,24 +255,6 @@ def handler_remove_cart(call):
                 bot.send_message(call.message.chat.id, "Ваша корзина пуста")
         else:
             bot.send_message(call.message.chat.id, "Ваша корзина пуста")
-
-
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.SET_ORDER_EMAIL)
-def handler_order_email(call):
-    constants_bot.client_status[call.message.chat.id] = constants_bot.SET_ORDER_EMAIL
-    bot.edit_message_text("Введите почту",
-                          chat_id=call.message.chat.id,
-                          message_id=call.message.id,
-                          )
-
-
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.SET_ORDER_ADDRESS)
-def handler_order_address(call):
-    constants_bot.client_status[call.message.chat.id] = constants_bot.SET_ORDER_ADDRESS
-    bot.edit_message_text("Введите адрес доставки",
-                          chat_id=call.message.chat.id,
-                          message_id=call.message.id,
-                          )
 
 
 @bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.CATEGORY_TAG)
@@ -286,23 +282,9 @@ def handler_category_click(call):
         len_product = len(products)
 
         for p in products[:1]:
-            kb = InlineKeyboardMarkup()
-            button = InlineKeyboardButton(
-                text=constants_bot.ADD_TO_CART,
-                callback_data=json.dumps({
-                    "id": str(p.id),
-                    "tag": constants_bot.PRODUCT_TAG
-                }))
+            tags = [constants_bot.ADD_TO_CART, constants_bot.CART_KB[constants_bot.RIGHT]]
 
-            kb.add(button)
-            right_btn = InlineKeyboardButton(
-                text=constants_bot.CART_KB[constants_bot.RIGHT],
-                callback_data=json.dumps({
-                    "id": str(p.id),
-                    "tag": constants_bot.RIGHT
-                }))
-            if len_product > 1:
-                kb.add(right_btn)
+            kb = init_cart_button(tags, p.id)
             read = p.image.read()
             if read is None:
                 bot.send_message(call.message.chat.id,
@@ -316,57 +298,28 @@ def handler_category_click(call):
                                )
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.RIGHT)
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.CART_KB[constants_bot.RIGHT])
 def handler_menu_product_right(call):
     products = constants_bot.product_data
     id_ = constants_bot.ID_PRODUCT
     step_ = id_ + 1
     constants_bot.ID_PRODUCT = step_
     len_product = len(products)
-    p = products[id_: step_][0]
-    kb = InlineKeyboardMarkup()
-    button = InlineKeyboardButton(
-        text=constants_bot.ADD_TO_CART,
-        callback_data=json.dumps({
-            "id": str(p.id),
-            "tag": constants_bot.PRODUCT_TAG
-        }))
-
-    kb.add(button)
-    if step_ == len_product:
-        left_btn = InlineKeyboardButton(
-            text=constants_bot.CART_KB[constants_bot.LEFT],
-            callback_data=json.dumps({
-                "id": str(p.id),
-                "tag": constants_bot.LEFT
-            }))
-
-        kb.add(left_btn)
+    if step_ > 0 and len_product > 0:
+        p = products[id_: step_][0]
     else:
-        right_btn = InlineKeyboardButton(
-            text=constants_bot.CART_KB[constants_bot.RIGHT],
-            callback_data=json.dumps({
-                "id": str(p.id),
-                "tag": constants_bot.RIGHT
-            }))
+        products = Product.objects
+        p = products[:1][0]
+    tags = [constants_bot.ADD_TO_CART, constants_bot.CART_KB[constants_bot.LEFT]]
 
-        left_btn = InlineKeyboardButton(
-            text=constants_bot.CART_KB[constants_bot.LEFT],
-            callback_data=json.dumps({
-                "id": str(p.id),
-                "tag": constants_bot.LEFT
-            }))
-
-        kb.add(left_btn, right_btn)
-
+    if step_ != len_product:
+        tags.append(constants_bot.CART_KB[constants_bot.RIGHT])
+    kb = init_cart_button(tags, p.id)
     read = p.image.read()
     if read is None:
-        bot.edit_message_text(
-            text=p.get_description(),
-            chat_id=call.message.chat.id,
-            message_id=call.message.id,
-            reply_markup=kb
-        )
+        bot.send_message(call.message.chat.id,
+                         p.get_description(),
+                         reply_markup=kb)
     else:
         bot.send_photo(call.message.chat.id,
                        read,
@@ -375,48 +328,26 @@ def handler_menu_product_right(call):
                        )
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.LEFT)
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.CART_KB[constants_bot.LEFT])
 def handler_menu_product_right(call):
     products = constants_bot.product_data
     id_ = constants_bot.ID_PRODUCT
     step_ = id_ - 1
     constants_bot.ID_PRODUCT = step_
-    p = products[step_: id_][0]
-    kb = InlineKeyboardMarkup()
-    button = InlineKeyboardButton(
-        text=constants_bot.ADD_TO_CART,
-        callback_data=json.dumps({
-            "id": str(p.id),
-            "tag": constants_bot.PRODUCT_TAG
-        }))
 
-    kb.add(button)
-    if step_ == 0:
-        right_btn = InlineKeyboardButton(
-            text=constants_bot.CART_KB[constants_bot.RIGHT],
-            callback_data=json.dumps({
-                "id": str(p.id),
-                "tag": constants_bot.RIGHT
-            }))
-
-        kb.add(right_btn)
+    if step_ > 0:
+        p = products[step_-1: step_][0]
     else:
-        right_btn = InlineKeyboardButton(
-            text=constants_bot.CART_KB[constants_bot.RIGHT],
-            callback_data=json.dumps({
-                "id": str(p.id),
-                "tag": constants_bot.RIGHT
-            }))
+        products = Product.objects
+        p = products[:1][0]
+    tags = [constants_bot.ADD_TO_CART]
 
-        left_btn = InlineKeyboardButton(
-            text=constants_bot.CART_KB[constants_bot.LEFT],
-            callback_data=json.dumps({
-                "id": str(p.id),
-                "tag": constants_bot.LEFT
-            }))
+    if step_ > 1:
+        tags.append(constants_bot.CART_KB[constants_bot.LEFT])
 
-        kb.add(left_btn, right_btn)
+    tags.append(constants_bot.CART_KB[constants_bot.RIGHT])
 
+    kb = init_cart_button(tags, p.id)
     read = p.image.read()
     if read is None:
         bot.edit_message_text(
@@ -433,20 +364,7 @@ def handler_menu_product_right(call):
                        )
 
 
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.NEWS)
-def handler_news(call):
-    all_news_ = News.objects
-    kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = [KeyboardButton(n) for n in constants_bot.START_KB.values()]
-    kb.add(*buttons)
-    if not len(all_news_) == 0:
-        news_ = all_news_[:len(all_news_)][len(all_news_) - 1]
-        bot.send_message(call.message.chat.id, f'{news_.title}\n {news_.body}', reply_markup=kb)
-    else:
-        bot.send_message(call.message.chat.id, "Новостей нет", reply_markup=kb)
-
-
-@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.PRODUCT_TAG)
+@bot.callback_query_handler(lambda c: json.loads(c.data)['tag'] == constants_bot.ADD_TO_CART)
 def handler_add_to_cart(call):
     product_id = json.loads(call.data)['id']
     product = Product.objects.get(id=product_id)
@@ -472,9 +390,8 @@ def handle_text(message):
                 order.save()
                 user.email = order.email
                 user.save()
-                kb = init_cart_button([constants_bot.SET_ORDER_ADDRESS], str(constants_bot.SET_ORDER_ADDRESS))
                 constants_bot.client_status[client_id] = constants_bot.SET_ORDER_ADDRESS
-                bot.send_message(message.chat.id, "Почту записали. Введите адрес доставки", reply_markup=kb)
+                bot.send_message(message.chat.id, "Почту записали. Введите адрес доставки")
             except ValidationError:
                 bot.send_message(message.chat.id, "Не верная почту. Введите почту снова")
 
