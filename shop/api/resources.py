@@ -41,15 +41,19 @@ class PostAddCategory(Resource):
                 parent_name = json_data['parent']
             except KeyError:
                 parent_name = ''
+                parent = ''
             if parent_name:
                 try:
                     parent = Category.objects.get(title=parent_name)
                     if parent:
-                        category.add_subcategory(parent)
-                except DoesNotExist as errors:
+                        category.parent = parent
+                except DoesNotExist:
                     return {'errors': 'not category parent'}
 
             category.save()
+            if parent:
+                parent.add_subcategory(category)
+                parent.save()
             user_json = category.to_json()
             return json.loads(user_json)
         except ValidationError as errors:

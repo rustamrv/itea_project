@@ -13,9 +13,9 @@ class User(me.Document):
     def get_active_cart(self):
         cart = Cart.objects(user=self, is_active=True).first()
         if not cart:
-            cart = Cart.objects.create(
-                user=self
-            )
+            cart = Cart()
+            cart.user = self
+            cart.save()
         return cart
 
     def formatted_data(self):
@@ -42,8 +42,6 @@ class Category(me.Document):
         return not bool(self.parent)
 
     def add_subcategory(self, category):
-        category.parent = self
-        category.save()
         self.subcategories.append(category)
         self.save()
 
@@ -100,7 +98,7 @@ class Cart(me.Document):
         for i in set(self.products):
             product = {
                 'id': i.id,
-                'description': self.get_detail(i)
+                'description': self.get_detail(i.id)
             }
             data.append(product)
         return data
@@ -119,13 +117,14 @@ class Cart(me.Document):
             order.user = self.user
             order.cart = self
             order.sum_order = self.get_cost_cart()
-            if not order.sum_order == 0:
+            if order.sum_order > 0:
                 order.save()
             else:
                 return None
         return order
 
-    def get_detail(self, product):
+    def get_detail(self, id_):
+        product = Product.objects.get(id=id_)
         len_obj = [j for j in self.products if j == product]
         return f'{product.title} \nprice {product.price} x {len(len_obj)} = {len(len_obj) * product.price}'
 

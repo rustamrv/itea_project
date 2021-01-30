@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add product</title>
+</head>
+<body>
+{% include 'menu.html' %}
+<div class="container">
+    <div class="container">
+        {% if add %}
+        <form name="add_product" action="add_product" method="post"  enctype="multipart/form-data">
+            <div class="form-group">
+                <p><b>Add product</b></p>
+                <p>Title <input type="text" class="form-control" name="title"></p>
+                <p>Description <textarea name="description" class="form-control" rows="3"></textarea></p>
+                <p>Price <input type="number" class="form-control" step="0.01" name="price"></p>
+                <p>Image <input type="file" class="form-control-file"  name="file"></p>
+                <p>Parent
+                    <select name="parent" class="form-control form-control-sm">
+                    {% for i in categories %}
+                        <option name="{{i.title}}" value="{{i.id}}">{{i.title}}</option>
+                    {% endfor %}
+                    </select></p>
+                <p><input type="submit"></p>
+            </div>
+        </form>
+        {% else %}
+        <form name="/edit_product/{{product.id}}" action="/edit_product/{{product.id}}" method="post"  enctype = "multipart/form-data">
+            <div class="form-group">
+                <p><b>Edit product</b></p>
+                <p>Title <input type="text" class="form-control" name="title" value="{{product.title}}"></p>
+                <p>Description<textarea name="description" value="{{product.description}}" class="form-control" rows="3">{{product.description}}
+                </textarea></p>
+                <p>Price <input type="number" class="form-control"  step="0.01" value="{{product.price}}"  name="price"></p>
+                <p>Image <input type="file" class="form-control-file" value="{{product.image}}" name="file"></p>
+                <p>Parent
+                    <select name="parent" class="form-control form-control-sm">
+                        {% for i in categories %}
+                            {% if i.id == product.category.id %}
+                            <option name="{{i.title}}" value="{{i.id}}" selected >{{i.title}}</option>
+                            {% else %}
+                           <option name="{{i.title}}" value="{{i.id}}">{{i.title}}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select></p>
+                <p><input type="submit"></p>
+            </div>
+        </form>
+
+        {% endif %}
+    </div>
+</body>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+</html>

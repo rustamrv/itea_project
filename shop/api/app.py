@@ -1,11 +1,18 @@
 import os
+from flask import Flask, render_template, redirect, url_for, request
+from shop.api.resources import PostAddCategory, PostAddProduct, RestOrder, RestCatalog, RestProducts
+from shop.models.shop_models import Category, Product, User, Order
+from shop.models.extra_models import News
+from flask_restful import Api
 
-from flask import Blueprint, render_template, redirect, url_for, request
-from ..models.shop_models import Category, Product, User, Order
-from ..models.extra_models import News
-from ..bot.config import WEBHOOK_URI
 
-admin = Blueprint('admin', __name__)
+admin = Flask(__name__, template_folder='templates')
+api = Api(admin)
+api.add_resource(RestProducts, '/api/products')
+api.add_resource(RestCatalog, '/api/catalogs')
+api.add_resource(RestOrder, '/api/orders')
+api.add_resource(PostAddCategory, '/api/add_category')
+api.add_resource(PostAddProduct, '/api/add_product')
 
 
 @admin.route('/')
@@ -28,7 +35,12 @@ def add_group():
         category.title = data_form['name']
         category.save()
         if data_form['parent']:
-            category.add_subcategory(Category.objects.get(id=data_form['parent']))
+            parent = Category.objects.get(id=data_form['parent'])
+            category.parent = parent
+            category.save()
+            parent.add_subcategory(category)
+            parent.save()
+
         return redirect(url_for('.index'))
 
 
@@ -38,6 +50,7 @@ def add_product():
         categories = Category.objects
         data = {
             "categories": categories,
+            "add": True,
         }
         return render_template('/add_product.html', **data)
     else:
@@ -100,11 +113,31 @@ def delete_product(product_id=None):
     return redirect(url_for('.products'))
 
 
-@admin.route('/edit_product/<product_id>')
+@admin.route('/edit_product/<product_id>', methods=['GET','POST'])
 def edit_product(product_id=None):
     product = Product.objects.get(id=product_id)
-    # edit
-    return redirect(url_for('.products'))
+    if request.method == "GET":
+        categories = Category.objects
+        data = {
+            "categories": categories,
+            "add": False,
+            "product": product,
+        }
+
+        return render_template('/add_product.html', **data)
+    else:
+        data_form = dict(request.form)
+        product.title = data_form["title"]
+        product.description = data_form["description"]
+        product.price = float(data_form["price"])
+        product.category = Category.objects.get(id=data_form['parent'])
+        file = request.files['file']
+        if file.filename != '':
+            file.save(file.filename)
+            product.image.put(file, content_type='image/png', filename=file.filename)
+            os.remove(file.filename)
+        product.save()
+        return redirect(url_for('.products'))
 
 
 @admin.route('/add_news', methods=['GET', 'POST'])
@@ -118,3 +151,5 @@ def add_news():
         news_.body = data_form["description"]
         news_.save()
         return redirect(url_for('.news'))
+
+
