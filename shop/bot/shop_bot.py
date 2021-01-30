@@ -14,9 +14,10 @@ from flask import Flask, request, abort
 from .send_news import Sender
 from threading import Thread
 import time
+from .root import app
 
 bot = TeleBot(TOKEN)
-app = Flask(__name__)
+# app = Flask(__name__)
 
 
 def send_msg():
@@ -31,7 +32,7 @@ def send_msg():
         time.sleep(day)
 
 
-# Thread(target=send_msg).start()
+Thread(target=send_msg).start()
 
 
 @app.route(WEBHOOK_URI, methods=['POST'])
