@@ -4,8 +4,6 @@ from shop.models.shop_models import Category, Product, User, Order
 from shop.models.extra_models import News
 from flask_restful import Api
 from shop.api.resources import PostAddCategory, PostAddProduct, RestOrder, RestCatalog, RestProducts
-from .config import WEBHOOK_URI
-
 
 app = Flask(__name__, template_folder='templates')
 api = Api(app)
@@ -16,13 +14,18 @@ api.add_resource(PostAddCategory, '/api/add_category')
 api.add_resource(PostAddProduct, '/api/add_product')
 
 
-@app.route('/')
-@app.route('/index')
+@app.route('/api')
+@app.route('/api/index')
 def index():
-    return "Hello" # render_template('index.html')
+    return render_template('index.html')
 
 
-@app.route('/add_group', methods=['GET', 'POST'])
+@app.errorhandler(404)
+def page_not_found(error):
+    return 'This route does not exist {} {}'.format(request.url, error), 404
+
+
+@app.route('/api/add_group', methods=['GET', 'POST'])
 def add_group():
     if request.method == "GET":
         categories = Category.objects
@@ -45,7 +48,7 @@ def add_group():
         return redirect(url_for('.index'))
 
 
-@app.route('/add_product', methods=['GET', 'POST'])
+@app.route('/api/add_product', methods=['GET', 'POST'])
 def add_product():
     if request.method == "GET":
         categories = Category.objects
@@ -70,7 +73,7 @@ def add_product():
         return redirect(url_for('.products'))
 
 
-@app.route('/products', methods=['GET', 'POST'])
+@app.route('/api/products', methods=['GET', 'POST'])
 def products():
     if request.method == "GET":
         products = Product.objects
@@ -80,7 +83,7 @@ def products():
         return render_template('list_of_products.html', **data)
 
 
-@app.route('/users')
+@app.route('/api/users')
 def users():
     users = User.objects
     data = {
@@ -89,7 +92,7 @@ def users():
     return render_template('list_of_users.html', **data)
 
 
-@app.route('/news')
+@app.route('/api/news')
 def news():
     news = News.objects
     data = {
@@ -98,7 +101,7 @@ def news():
     return render_template('list_of_news.html', **data)
 
 
-@app.route('/orders')
+@app.route('/api/orders')
 def orders():
     orders = Order.objects
     data = {
@@ -107,14 +110,14 @@ def orders():
     return render_template('list_of_order.html', **data)
 
 
-@app.route('/delete/<product_id>')
+@app.route('/api/delete/<product_id>')
 def delete_product(product_id=None):
     product = Product.objects.get(id=product_id)
     product.delete()
     return redirect(url_for('.products'))
 
 
-@app.route('/edit_product/<product_id>', methods=['GET', 'POST'])
+@app.route('/api/edit_product/<product_id>', methods=['GET', 'POST'])
 def edit_product(product_id=None):
     product = Product.objects.get(id=product_id)
     if request.method == "GET":
@@ -141,7 +144,7 @@ def edit_product(product_id=None):
         return redirect(url_for('.products'))
 
 
-@app.route('/add_news', methods=['GET', 'POST'])
+@app.route('/api/add_news', methods=['GET', 'POST'])
 def add_news():
     if request.method == "GET":
         return render_template('add_news.html')

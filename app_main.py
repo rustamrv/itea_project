@@ -1,3 +1,3 @@
-from shop.api.app import admin
+from shop.api.root import app
 
-admin.run()
+app.run()
